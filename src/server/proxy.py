@@ -7,12 +7,13 @@
 import socket #Package used to simplify writing network servers
 #import sys #Allows python runtime environment manipulation | Could use for exiting sys.exit()
 import threading #module that makes working with threads more simply
+import time
 
 class Proxy:
     def __init__(self):
         self.listening_port = 6500
         self.buffer_size = 8192 #Used to define the maximum data bytes to be received at once
-        self.max_connection = 7 #Used to define how many backlog of requests our sockets can handle before refusing new connections
+        self.max_connection = 7000 #Used to define how many backlog of requests our sockets can handle before refusing new connections
         self.skt = None
         # self.connection = None
         # self.address = None
@@ -20,8 +21,9 @@ class Proxy:
         
     def define_socket(self):
         #Our Server must create, bind, listen, then accept in that order where accept may repeat as needed
-        
+        print("In define")
         try:
+            print("In define-first try")
             self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #Creates a new socket object of socket type SOCK_STREAM and address family AF_INET
             self.skt.bind(('', self.listening_port)) #Binds socket to address
             self.skt.listen(self.max_connection) #Enables our server to accept connections with maximum backlog specified by parameter passed
@@ -29,18 +31,114 @@ class Proxy:
             print(e)
             
         while True:
+            print("In define- while loop")
             try:
                 self.accept_connection()
             except Exception as e:
                 print(e)
-                #self.skt.close()
+                self.skt.close()
                 break # Need to exit our while loop more efficiently        
         
         self.skt.close()
             
     def accept_connection(self):
+        print("In define-in accept connection")
         connection, address = self.skt.accept() #Methods returns a key value pair of a new Socket object:connection and address bound to socket at next end of connection
+        #MAY NEED ANOTHER LOOP HERE. NOT SURE IF ALL DATA IS READ
         data_stream = connection.recv(self.buffer_size) # Stream of data being sent between our connection 
-        #To be fixed:  start_new_thread(conn_string(connection, data_stream, address))
+        # To be fixed:  start_new_thread(conn_string(connection, data_stream, address))
+        # print(data_stream)
+        print("start thread connection")
+        thrd = threading.Thread(target=self.connection_string, args=[connection, data_stream, address])
+        thrd.start()
+        print("end accept connection")
+    
+    def connection_string(self, connection, data_stream, address):
+        #Retrieves the host address
+        print("in connection string")
+        try:
+            print("in connection string- try block")
+            #Processing the browser client request for url, etc
+            first_line = data_stream.decode('latin-1').split("\n")[0]
+            print(first_line)
+            url = first_line.split(' ')[1]
+            print(url)
+            print("in connection string- try block-after url")
+            http_position = url.find("://") #Locate ://
+            if (http_position==-1):
+                temp=url
+            else:
+                temp = url[(http_position+3):] #Slicing to get remainder of url
+            
+            print("in connection string- try block- after first if")
+            port_position = temp.find(":") #Locate port position
+        
+            webserver_position = temp.find("/")
+            
+            if webserver_position == -1: #if webserver position not found
+                webserver_position = len(temp)
+            webserver = ""
+            port = -1
+            print("in connection string- try block-after 2nd if")
+            
+            if port_position == -1 or webserver_position < port_position:
+                port= 80
+                webserver = temp[:webserver_position]
+            else:
+                port = int((temp[(port_position + 1):])[:webserver_position - port_position - 1])
+                webserver = temp[:port_position]
+                
+            print(port)
+            print("in connection string- try block- after 3rd if")
+            print()
+            print("END connection string CALL PROXY SERVER")    
+            self.proxy_server(webserver, port, connection, address, data_stream)
         
         
+        except Exception as e:
+            print(e)
+            
+        
+            
+            
+    def proxy_server(self, webserver, port, connection, address, data_stream):
+        # Creates a new socket to allow connecting to the webserver.
+        # The function also sends request and receive replies between client and server
+        try:
+            self.skt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.skt.connect((webserver, port))
+            self.skt.send(data_stream)
+
+            while True:
+                #Reading to and from webserver
+                reply_stream = self.skt.recv(self.buffer_size)
+                
+                if len(reply_stream)> 0:
+                    connection.send(reply_stream)
+                    
+                    dar = float(len(reply_stream))
+                    dar = float(dar/1024)
+                    dar = "{}.3s".format(dar)
+                    print("[*] Request done: {} => {} <= {}".format(address[0], dar, webserver))
+                else:
+                    break
+            self.skt.close()
+            connection.close()
+            
+        except socket.error as e:
+            self.skt.close()
+            connection.close()
+            
+        
+    # def thread_def(self):
+    #     print("test")
+    #     time.sleep(1)
+    #     print("done")
+        
+        
+if __name__ == '__main__':
+    p = Proxy()
+    p.define_socket()
+    
+    
+#     print(threading.active_count())
