@@ -141,10 +141,11 @@ def create_config_file():
 
 # config = configparser.ConfigParser()
 
+def setUpProxy():
+    create_config_file()
 
-create_config_file()
-
-config = configparser.ConfigParser()
-config.read('config.ini')
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+            
+    Server(config)
         
-Server(config)
