@@ -5,8 +5,10 @@ from pathlib import Path
 import datetime
 import threading
 
-from proxy_geeks import setUpProxy
+# from proxy_geeks import setUpProxy
 # from proxy_geeks import create_config_file, Server
+from proxy_geeks import *
+# import Server
 
 
 class View():
@@ -14,6 +16,8 @@ class View():
         self.my_dir = Path(__file__).parent
         # self.stop_thread =threading.Event()
         self.threadFlag = None
+        
+        self.server = Server()
 
         self.root = Tk()
         self.root.title("Proxy")
@@ -52,9 +56,10 @@ class View():
             self.startStop_btn["text"] = "Stop"
             self.startStop_btn.config(bg="#AE1111")
             sleep(3)
-        
+
+            self.server = Server()
             self.threadFlag = False
-            self.thrd = threading.Thread(target = setUpProxy, args=())
+            self.thrd = threading.Thread(target = self.server.establish_connection, args=())
             self.thrd.setDaemon(True)
             
             self.thrd.start()
@@ -64,7 +69,7 @@ class View():
             self.startStop_btn["text"] = "Start"
             self.startStop_btn.config(bg="#519744")
             
-            self.threadFlag = True
+            self.server.dead =True
             
 
     def get_logs(self):

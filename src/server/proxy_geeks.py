@@ -5,19 +5,23 @@ import threading
 from time import sleep
 
 class Server:
-    def __init__(self, config):
+    def __init__(self):
         
         print("[SERVER BOOTING] : ...")
         
-        self.HOST_NAME = config['SERVERCONFIG']['HOST_NAME']
-        self.BIND_PORT = int(config['SERVERCONFIG']['BIND_PORT'])
-        self.MAX_REQUEST_LEN = int(config['SERVERCONFIG']['MAX_REQUEST_LEN'])
-        self.CONNECTION_TIMEOUT = int(config['SERVERCONFIG']['CONNECTION_TIMEOUT'])
+        self.create_config_file()
+
+        self.config = configparser.ConfigParser()
+        self.config.read('config.ini')
         
-        # print(type(self.HOST_NAME))
-        # print(type(self.BIND_PORT))
-        # print(type(self.MAX_REQUEST_LEN))
-        # print(type(self.CONNECTION_TIMEOUT))
+        self.dead = False
+        
+        
+        self.HOST_NAME = self.config['SERVERCONFIG']['HOST_NAME']
+        self.BIND_PORT = int(self.config['SERVERCONFIG']['BIND_PORT'])
+        self.MAX_REQUEST_LEN = int(self.config['SERVERCONFIG']['MAX_REQUEST_LEN'])
+        self.CONNECTION_TIMEOUT = int(self.config['SERVERCONFIG']['CONNECTION_TIMEOUT'])
+        
         
         # Shutdown on Ctrl+C
         # signal.signal(signal.SIGINT, self.shutdown) 
@@ -38,7 +42,15 @@ class Server:
         
         ###################################
         
+        
+            
+        #####################
+    def establish_connection(self):
         while True:
+            if self.dead == True:
+                print(f"[MAIN THREAD INTERRUPTED] : Terminating listening stream connection")
+                break
+            
             # Establish the connection
             (clientSocket, client_address) = self.serverSocket.accept()
             print(f"[NEW CONNECTION] : {client_address} connected.")
@@ -50,8 +62,6 @@ class Server:
             d.setDaemon(True)
             d.start()
             sleep(1)
-            
-        #####################
         
     def proxy_thread(self, clientSocket, client_address):
         # get the request from browser
@@ -106,6 +116,12 @@ class Server:
         #######################
         
         while 1:
+            
+            if self.dead == True:
+                print(f"[THREAD INTERRUPTED] : Terminating data stream connection")
+                break
+            
+            
             # receive data from web server
             print(f"[SERVER] : Retrieving data from {s_addr}")
             data = s.recv(self.MAX_REQUEST_LEN)
@@ -124,28 +140,25 @@ class Server:
         
         ############################
 
-
-def create_config_file():
-    config_object = configparser.ConfigParser()
-    
-    config_object["SERVERCONFIG"] = {
-    "HOST_NAME": "",
-    "BIND_PORT": "4444",
-    "MAX_REQUEST_LEN": "8192",
-    "CONNECTION_TIMEOUT": "30"
-    }
-
-    #Write the above sections to config.ini file
-    with open('config.ini', 'w') as conf:
-        config_object.write(conf)
-
-# config = configparser.ConfigParser()
-
-def setUpProxy():
-    create_config_file()
-
-    config = configparser.ConfigParser()
-    config.read('config.ini')
+    def create_config_file(self):
+            config_object = configparser.ConfigParser()
             
-    Server(config)
+            config_object["SERVERCONFIG"] = {
+            "HOST_NAME": "",
+            "BIND_PORT": "4444",
+            "MAX_REQUEST_LEN": "4096",
+            "CONNECTION_TIMEOUT": "60"
+            }
+
+            #Write the above sections to config.ini file
+            with open('config.ini', 'w') as conf:
+                config_object.write(conf)
+
+
+
+            
+    # Server(config, dead)
         
+        
+# global dead
+# dead = False
