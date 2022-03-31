@@ -5,19 +5,12 @@ from pathlib import Path
 import datetime
 import threading
 
-# from proxy_geeks import setUpProxy
-# from proxy_geeks import create_config_file, Server
 from proxy_geeks import *
-# import Server
 
 
 class View():
     def __init__(self):
         self.my_dir = Path(__file__).parent
-        # self.stop_thread =threading.Event()
-        self.threadFlag = None
-        
-        self.server = Server()
 
         self.root = Tk()
         self.root.title("Proxy")
@@ -42,7 +35,6 @@ class View():
         self.importantLabel.grid(row= 4, column=0, pady=10)
 
         self.startStop_btn = Button(self.root, text= "Start", padx=75, bg="#519744", fg="white", command=self.start_stopEvt)
-        # startStop_btn = Button(root, text= "Stop", padx=75, bg="#AE1111", fg="white", command=start_stopEvt)
         self.startStop_btn.grid(row=1, column=0, pady=10)
 
         self.logs_btn = Button(self.root, text="Logs", padx=75, bg="white", command=self.get_logs)
@@ -81,79 +73,5 @@ class View():
         print("Current "+ str(current_time))
         self.lastrunningtime = str(current_time -  initial_time)
         print(self.lastrunningtime)
-
-    def endThread(self):
-        # self.stop_thread.set()
-        # self.thrd = None
-        pass
-    
-
-
-
-
-# def  start_stopEvt():
-    
-    
-#     if startStop_btn["text"]=="Start":
-#         startStop_btn["text"] = "Stop"
-#         startStop_btn.config(bg="#AE1111")
-#         sleep(3)
-    
-#         thrd = threading.Thread(target = setUpProxy, args=())
-#         thrd.setDaemon(True)
-#         thrd.start()
-        
-#         # setUpProxy()
-        
-#     elif startStop_btn["text"]=="Stop":
-        
-#         startStop_btn["text"] = "Start"
-#         startStop_btn.config(bg="#519744")
-        
-        
-
-# def get_logs(self):
-#     pass
-
-# def updateRunTime(self, initial_time):
-#     sleep(5)
-#     current_time = datetime.datetime.utcnow()
-#     print("Current "+ str(current_time))
-#     lastrunningtime = str(current_time -  initial_time)
-#     print(lastrunningtime)
-
-# my_dir = Path(__file__).parent
-
-# root = Tk()
-# root.title("Proxy")
-# root.configure(bg="#1A1F1F")
-# root.iconbitmap(my_dir / "assets/proxyserver16.ico")
-# root.geometry("230x300")
-# root.minsize(230, 300)
-# root.maxsize(230, 300)
-
-
-# titleLabel = Label(root, text="Proxy Server", font=("Courier", 18, "bold"), bg="#1A1F1F", fg="white")
-
-# lastrunningtime = ""
-# initial_time = datetime.datetime.utcnow()
-# print("Initial "+ str(initial_time))
-
-# runtimeLabel = Label(root, text="Runtime: "+ lastrunningtime + "", bg="white")
-# importantLabel = Label(root, text="IMPORTANT:\nConfigure proxy settings as \nlocalhost with \nport#: 4444", bg="red", fg="white")
-
-# titleLabel.grid(row= 0, column=0, pady=10, ipady=10)
-# runtimeLabel.grid(row= 3, column=0, pady=10)
-# importantLabel.grid(row= 4, column=0, pady=10)
-
-# startStop_btn = Button(root, text= "Start", padx=75, bg="#519744", fg="white", command=start_stopEvt)
-# # startStop_btn = Button(root, text= "Stop", padx=75, bg="#AE1111", fg="white", command=start_stopEvt)
-# startStop_btn.grid(row=1, column=0, pady=10)
-
-# logs_btn = Button(root, text="Logs", padx=75, bg="white", command=get_logs)
-# logs_btn.grid(row=2, column=0, pady=10, padx=20)
-
-# updateRunTime(initial_time)
-# root.mainloop()
 
 View()

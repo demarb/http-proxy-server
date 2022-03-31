@@ -1,10 +1,10 @@
 import configparser
 import socket
-import signal
 import threading
 from time import sleep
 
 class Server:
+    #Server Constructor
     def __init__(self):
         
         print("[SERVER BOOTING] : ...")
@@ -21,10 +21,6 @@ class Server:
         self.BIND_PORT = int(self.config['SERVERCONFIG']['BIND_PORT'])
         self.MAX_REQUEST_LEN = int(self.config['SERVERCONFIG']['MAX_REQUEST_LEN'])
         self.CONNECTION_TIMEOUT = int(self.config['SERVERCONFIG']['CONNECTION_TIMEOUT'])
-        
-        
-        # Shutdown on Ctrl+C
-        # signal.signal(signal.SIGINT, self.shutdown) 
 
         # Create a TCP socket
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,17 +32,14 @@ class Server:
         self.serverSocket.bind((self.HOST_NAME, self.BIND_PORT))
         
         self.serverSocket.listen(10) # become a server socket
-        self.__clients = {}
+        # self.__clients = {}
         
         print(f"[SERVER LISTENING] : Server listening on port {self.BIND_PORT}")
-        
-        ###################################
-        
-        
-            
-        #####################
+    
+    #Method called by view to establish connection and allow listening    
     def establish_connection(self):
         while True:
+            #Check for flag if main thread should be killed
             if self.dead == True:
                 print(f"[MAIN THREAD INTERRUPTED] : Terminating listening stream connection")
                 break
@@ -56,29 +49,22 @@ class Server:
             print(f"[NEW CONNECTION] : {client_address} connected.")
             print(f"[ACTIVE THREAD COUNT] : {threading.active_count()}")
             
-            # d = threading.Thread(name=self._getClientName(client_address), 
-            # target = self.proxy_thread, args=(clientSocket, client_address))
             d = threading.Thread(target = self.proxy_thread, args=(clientSocket, client_address))
             d.setDaemon(True)
             d.start()
             sleep(1)
-        
-    def proxy_thread(self, clientSocket, client_address):
+    
+    #Cleans up request and sends data back and forth between client, server and web host    
+    def proxy_thread(self, clientSocket, client_address):       
         # get the request from browser
-        # request = conn.recv(int(config['SERVERCONFIG']['MAX_REQUEST_LEN']))
         request = clientSocket.recv(self.MAX_REQUEST_LEN)
         print(f"[REQUEST LENGTH] : {len(request)}")
-        
-        #Try fixing a bytes-like object is required, not 'str'
-            # request.decode('utf-8')
 
         # parse the first line
         first_line = request.split(b'\n')[0]
 
         # get url
         url = first_line.split(b' ')[1]
-        
-        ###################
         
         http_pos = url.find(b"://") # find pos of ://
         if (http_pos==-1):
@@ -113,12 +99,11 @@ class Server:
         s_addr = (webserver, port)
         s.sendall(request)
         
-        #######################
-        
+        #Sends data until data sent completely sent or thread interrupted
         while 1:
-            
+            #Check for flag if thread should be killed
             if self.dead == True:
-                print(f"[THREAD INTERRUPTED] : Terminating data stream connection")
+                print(f"[THREAD INTERRUPTED] : Terminated during data transmission")
                 break
             
             
@@ -137,8 +122,6 @@ class Server:
         
         clientSocket.close()
         s.close()
-        
-        ############################
 
     def create_config_file(self):
             config_object = configparser.ConfigParser()
@@ -153,12 +136,3 @@ class Server:
             #Write the above sections to config.ini file
             with open('config.ini', 'w') as conf:
                 config_object.write(conf)
-
-
-
-            
-    # Server(config, dead)
-        
-        
-# global dead
-# dead = False
