@@ -1,9 +1,9 @@
-import configparser
 from time import sleep
 from tkinter import *
 from pathlib import Path
 import datetime
 import threading
+import webbrowser
 
 from proxy_geeks import *
 
@@ -72,7 +72,6 @@ class View():
 
     def get_logs(self):
         logs_path = ""
-        import webbrowser
         
         for charac in str(self.my_dir):
             if charac == "\\":
