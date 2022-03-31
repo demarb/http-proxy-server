@@ -50,7 +50,6 @@ class View():
             
             self.initial_time = datetime.datetime.utcnow()
             self.lastrunningtime = ""
-            # self.updateRunTime(self.initial_time)
             
             self.timer_thrd = threading.Thread(target = self.updateRunTime, args=(self.initial_time,))
             self.timer_thrd.setDaemon(True)
@@ -72,7 +71,16 @@ class View():
             
 
     def get_logs(self):
-        pass
+        logs_path = ""
+        import webbrowser
+        
+        for charac in str(self.my_dir):
+            if charac == "\\":
+                logs_path += "/"
+            else:
+                logs_path+= charac
+        
+        webbrowser.open('file:///' + logs_path)
 
     def updateRunTime(self, initial_time):
         while self.server.dead == False:
