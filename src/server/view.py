@@ -24,8 +24,6 @@ class View():
         self.titleLabel = Label(self.root, text="Proxy Server", font=("Courier", 18, "bold"), bg="#1A1F1F", fg="white")
 
         self.lastrunningtime = ""
-        self.initial_time = datetime.datetime.utcnow()
-        print("Initial "+ str(self.initial_time))
 
         self.runtimeLabel = Label(self.root, text="Runtime: "+ self.lastrunningtime + "", bg="white")
         self.importantLabel = Label(self.root, text="IMPORTANT:\nConfigure proxy settings as \nlocalhost with \nport#: 4444", bg="red", fg="white")
@@ -40,7 +38,6 @@ class View():
         self.logs_btn = Button(self.root, text="Logs", padx=75, bg="white", command=self.get_logs)
         self.logs_btn.grid(row=2, column=0, pady=10, padx=20)
 
-        self.updateRunTime(self.initial_time)
         self.root.mainloop()
 
     def  start_stopEvt(self):
@@ -50,7 +47,17 @@ class View():
             sleep(3)
 
             self.server = Server()
-            self.threadFlag = False
+            
+            self.initial_time = datetime.datetime.utcnow()
+            self.lastrunningtime = ""
+            # self.updateRunTime(self.initial_time)
+            
+            self.timer_thrd = threading.Thread(target = self.updateRunTime, args=(self.initial_time,))
+            self.timer_thrd.setDaemon(True)
+            self.timer_thrd.start()
+            
+            
+            
             self.thrd = threading.Thread(target = self.server.establish_connection, args=())
             self.thrd.setDaemon(True)
             
@@ -68,10 +75,9 @@ class View():
         pass
 
     def updateRunTime(self, initial_time):
-        sleep(5)
-        current_time = datetime.datetime.utcnow()
-        print("Current "+ str(current_time))
-        self.lastrunningtime = str(current_time -  initial_time)
-        print(self.lastrunningtime)
+        while self.server.dead == False:
+            self.current_time = datetime.datetime.utcnow()
+            self.lastrunningtime = str(self.current_time -  initial_time)
+            self.runtimeLabel["text"] = "Runtime: "+ self.lastrunningtime + ""
 
 View()
