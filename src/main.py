@@ -5,9 +5,11 @@ Computer Security Project
 
 '''
 #Imports
+import server.view as view
+
 
 def run():
-    pass
+    view.View()
 
 if __name__ == '__main__':
     run()

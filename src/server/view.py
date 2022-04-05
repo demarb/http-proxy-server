@@ -5,7 +5,7 @@ import datetime
 import threading
 import webbrowser
 
-from proxy_geeks import *
+from server.proxy_server import Server
 
 
 class View():
@@ -79,6 +79,9 @@ class View():
             else:
                 logs_path+= charac
         
+        logs_path= logs_path + "/logs"
+        
+        
         webbrowser.open('file:///' + logs_path)
 
     def updateRunTime(self, initial_time):
@@ -87,4 +90,4 @@ class View():
             self.lastrunningtime = str(self.current_time -  initial_time)
             self.runtimeLabel["text"] = "Runtime: "+ self.lastrunningtime + ""
 
-View()
+# View()

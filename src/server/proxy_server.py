@@ -2,13 +2,26 @@ import configparser
 import socket
 import threading
 from time import sleep
+import logging
+import datetime
+
+
+
+######################################
+
 
 class Server:
+
+
+    
+    
     #Server Constructor
     def __init__(self):
-        
-        print("[SERVER BOOTING] : ...")
-        
+        logging.basicConfig(filename='src/server/logs/proxy.log', level=logging.DEBUG, format= '%(asctime)s:%(thread)d:%(name)s:%(message)s', filemode = 'a' )
+
+
+        logging.info("[SERVER BOOTING] : ...")
+        logging.info( "Server start time" + str(datetime.datetime.utcnow) )
         self.create_config_file()
 
         self.config = configparser.ConfigParser()
@@ -34,31 +47,42 @@ class Server:
         self.serverSocket.listen(10) # become a server socket
         # self.__clients = {}
         
-        print(f"[SERVER LISTENING] : Server listening on port {self.BIND_PORT}")
+        logging.info(f"[SERVER LISTENING] : Server listening on port {self.BIND_PORT}")
     
     #Method called by view to establish connection and allow listening    
     def establish_connection(self):
         while True:
             #Check for flag if main thread should be killed
             if self.dead == True:
-                print(f"[MAIN THREAD INTERRUPTED] : Terminating listening stream connection")
+                logging.debug(f"[MAIN THREAD INTERRUPTED] : Terminating listening stream connection")
                 break
             
             # Establish the connection
             (clientSocket, client_address) = self.serverSocket.accept()
-            print(f"[NEW CONNECTION] : {client_address} connected.")
-            print(f"[ACTIVE THREAD COUNT] : {threading.active_count()}")
+            logging.info(f"[NEW CONNECTION] : {client_address} connected.")
+            logging.debug(f"[ACTIVE THREAD COUNT] : {threading.active_count()}")
             
             d = threading.Thread(target = self.proxy_thread, args=(clientSocket, client_address))
             d.setDaemon(True)
             d.start()
             sleep(1)
     
+    def domain_block(self, webserver):
+        sites_to_block = ['www.github.com', 'github.com']
+        
+        for site in sites_to_block:
+            if site == webserver:
+                print("Site blocked. Cannot access.")
+                return True
+            else:
+                return False
+        
+    
     #Cleans up request and sends data back and forth between client, server and web host    
     def proxy_thread(self, clientSocket, client_address):       
         # get the request from browser
         request = clientSocket.recv(self.MAX_REQUEST_LEN)
-        print(f"[REQUEST LENGTH] : {len(request)}")
+        logging.debug(f"[REQUEST LENGTH] : {len(request)} from : {client_address}")
 
         # parse the first line
         first_line = request.split(b'\n')[0]
@@ -92,38 +116,46 @@ class Server:
             webserver = temp[:port_pos] 
             
             ################################
-            
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-        s.settimeout(self.CONNECTION_TIMEOUT)
-        s.connect((webserver, port))
-        s_addr = (webserver, port)
-        s.sendall(request)
+        logging.info(f"Making connection with webserver: {url} from client {client_address}")
         
-        #Sends data until data sent completely sent or thread interrupted
-        while 1:
-            #Check for flag if thread should be killed
-            if self.dead == True:
-                print(f"[THREAD INTERRUPTED] : Terminated during data transmission")
-                break
+        if self.domain_block(webserver) == False:
+            
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+            s.settimeout(self.CONNECTION_TIMEOUT)
+            s.connect((webserver, port))
+            s_addr = (webserver, port)
+            s.sendall(request)
             
             
-            # receive data from web server
-            print(f"[SERVER] : Retrieving data from {s_addr}")
-            data = s.recv(self.MAX_REQUEST_LEN)
-            print(f"[DATA] : {len(data)} data from {s_addr}")
+            #Sends data until data sent completely sent or thread interrupted
+            while 1:
+                #Check for flag if thread should be killed
+                if self.dead == True:
+                    logging.debug(f"[THREAD INTERRUPTED] : Terminated during data transmission")
+                    break
+                
+                
+                # receive data from web server
+                logging.info(f"[SERVER] : Retrieving data from {s_addr}")
+                data = s.recv(self.MAX_REQUEST_LEN)
+                logging.info(f"[DATA] : {len(data)} data from {s_addr}")
 
+                
+                if (len(data) > 0):
+                    logging.info(f"[SERVER] : Sending data to {client_address}")
+                    clientSocket.send(data) # send to browser/client
+                else:
+                    logging.info(f"[SERVER] : Data Successfully sent to {client_address}")
+                    break
             
-            if (len(data) > 0):
-                print(f"[SERVER] : Sending data to {client_address}")
-                clientSocket.send(data) # send to browser/client
-            else:
-                print(f"[SERVER] : Data Successfully sent to {client_address}")
-                break
-        
-        clientSocket.close()
-        s.close()
+            clientSocket.close()
+            s.close()
+        else:
+            clientSocket.close()
+            
 
     def create_config_file(self):
+            logging.debug("Creating config_file")
             config_object = configparser.ConfigParser()
             
             config_object["SERVERCONFIG"] = {
@@ -131,8 +163,16 @@ class Server:
             "BIND_PORT": "4444",
             "MAX_REQUEST_LEN": "4096",
             "CONNECTION_TIMEOUT": "60"
+            
             }
 
             #Write the above sections to config.ini file
             with open('config.ini', 'w') as conf:
                 config_object.write(conf)
+
+
+######################################
+
+
+
+
