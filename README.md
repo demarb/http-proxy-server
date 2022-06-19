@@ -10,7 +10,7 @@ responses) to improve its performance. (Multithreaded)
 4. Runtime check for how long server is running.
 5. Automatically locating logs on the click of a button
 
-## Features that could be implemnted in the future
+## Features that could be implemented in the future
 1. Blacklisting Domains for greater security. Ex. blocking a specific ip address or a
 website
 2. Content monitoring: Blocking certain websites based on patterns in url or html found on page.
